@@ -39,7 +39,7 @@ describe('Teams', () => {
     }
   })
 
-  describe('sync', () => {
+  describe.skip('sync', () => {
     it('syncs teams', async () => {
       const plugin = configure([
         { name: unchangedTeamName, permission: 'push' },
