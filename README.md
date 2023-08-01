@@ -4,7 +4,7 @@ This is a private clone of [safe-settings](https://github.com/github/safe-settin
 
 ## Internal changes
 
-- Don't remove existing collaborators on sync
+- Don't remove existing collaborators, teams on sync
 - Fixed test config, skipped failing unit tests
 
 # GitHub Safe-Settings

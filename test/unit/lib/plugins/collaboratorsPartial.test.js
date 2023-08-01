@@ -1,6 +1,6 @@
-const Collaborators = require('../../../../lib/plugins/collaborators')
+const Collaborators = require('../../../../lib/plugins/collaboratorsPartial')
 
-describe('Collaborators', () => {
+describe('CollaboratorsPartial', () => {
   let github
 
   function configure (config) {
@@ -56,13 +56,7 @@ describe('Collaborators', () => {
 
         expect(github.repos.addCollaborator).toHaveBeenCalledTimes(2)
 
-        expect(github.repos.removeCollaborator).toHaveBeenCalledWith({
-          owner: 'bkeepers',
-          repo: 'test',
-          username: 'removed-user'
-        })
-
-        expect(github.repos.removeCollaborator).toHaveBeenCalledTimes(1)
+        expect(github.repos.removeCollaborator).not.toHaveBeenCalled()
       })
     })
   })
