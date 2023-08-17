@@ -6,6 +6,7 @@ This is a private clone of [safe-settings](https://github.com/github/safe-settin
 
 - Don't remove existing collaborators, teams on sync
 - Fixed test config, skipped failing unit tests
+- Support is_alphanumeric on autolink references
 
 # GitHub Safe-Settings
 
