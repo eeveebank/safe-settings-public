@@ -1,8 +1,8 @@
 const { when } = require('jest-when')
 const any = require('@travi/any')
-const Teams = require('../../../../lib/plugins/teams')
+const Teams = require('../../../../lib/plugins/teamsPartial')
 
-describe('Teams', () => {
+describe('TeamsPartial', () => {
   let github
   const addedTeamName = 'added'
   const addedTeamId = any.integer()
@@ -75,19 +75,11 @@ describe('Teams', () => {
         permission: 'pull'
       })
 
-      expectTeamDeleted(removedTeamId)
+      expectTeamNotDeleted(removedTeamId)
     })
 
-    function expectTeamDeleted(teamId) {
-      expect(github.request).toHaveBeenCalledWith(
-        'DELETE /teams/:team_id/repos/:owner/:repo',
-        {
-          org,
-          owner: org,
-          repo: 'test',
-          team_id: teamId
-        }
-      )
+    function expectTeamNotDeleted(teamId) {
+      expect(github.request).not.toHaveBeenCalled()
     }
   })
 })

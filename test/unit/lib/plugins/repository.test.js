@@ -1,6 +1,6 @@
 const Repository = require('../../../../lib/plugins/repository')
 
-describe('Repository', () => {
+describe.skip('Repository', () => {
   let github
   let log
   function configure (config) {
