@@ -3,8 +3,10 @@ WORKDIR /opt/safe-settings
 ENV NODE_ENV production
 ## Set the Labels
 LABEL version="1.0" \
-      description="Probot app which is a modified version of Settings Probot GitHub App" \
-      maintainer="GitHub Professional Services <services@github.com>"
+  description="Probot app which is a modified version of Settings Probot GitHub App" \
+  maintainer="GitHub Professional Services <services@github.com>"
+
+RUN apk update && apk upgrade && apk add --upgrade libcrypto3 libssl3
 
 ## These files are copied separately to allow updates
 ## to the image to be as small as possible
