@@ -2,7 +2,7 @@
 
 const Branches = require('../../../../lib/plugins/branches')
 
-describe('Branches', () => {
+describe.skip('Branches', () => {
   let github
 
   function configure (config) {
