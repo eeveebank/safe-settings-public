@@ -21,7 +21,12 @@ describe('TeamsPartial', () => {
 
   beforeEach(() => {
     github = {
-      paginate: jest.fn().mockResolvedValue(),
+      paginate: jest.fn()
+        .mockResolvedValue()
+        .mockImplementation(async (fetch) => {
+          const response = await fetch()
+          return response.data
+        }),
       teams: {
         getByName: jest.fn(),
         addOrUpdateRepoPermissionsInOrg: jest.fn().mockResolvedValue()
@@ -39,7 +44,7 @@ describe('TeamsPartial', () => {
     }
   })
 
-  describe.skip('sync', () => {
+  describe('sync', () => {
     it('syncs teams', async () => {
       const plugin = configure([
         { name: unchangedTeamName, permission: 'push' },
@@ -55,7 +60,7 @@ describe('TeamsPartial', () => {
       await plugin.sync()
 
       expect(github.request).toHaveBeenCalledWith(
-        'PUT /teams/:team_id/repos/:owner/:repo',
+        'PUT /orgs/:owner/teams/:team_slug/repos/:owner/:repo',
         {
           org,
           owner: org,
@@ -75,11 +80,14 @@ describe('TeamsPartial', () => {
         permission: 'pull'
       })
 
-      expectTeamNotDeleted(removedTeamId)
+      expectTeamNotDeleted(removedTeamName)
     })
 
-    function expectTeamNotDeleted(teamId) {
-      expect(github.request).not.toHaveBeenCalled()
+    function expectTeamNotDeleted() {
+      expect(github.request).not.toHaveBeenCalledWith(
+        'DELETE /orgs/:owner/teams/:team_slug/repos/:owner/:repo',
+        expect.any(Object)
+      )
     }
   })
 })
