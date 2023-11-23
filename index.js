@@ -6,9 +6,16 @@ const Glob = require('./lib/glob')
 const ConfigManager = require('./lib/configManager')
 const NopCommand = require('./lib/nopcommand')
 const env = require('./lib/env')
+const metrics = require('@operate-first/probot-metrics');
 
 let deploymentConfig
-module.exports = (robot, _, Settings = require('./lib/settings')) => {
+
+
+
+module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) => {
+
+  metrics.exposeMetrics(getRouter(), '/metrics');
+
   async function syncAllSettings (nop, context, repo = context.repo(), ref) {
     try {
       deploymentConfig = await loadYamlFileSystem()
