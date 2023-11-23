@@ -14,6 +14,7 @@
     "lint:engines": "check-engine",
     "lint:peer": "npm ls >/dev/null",
     "test:unit": "jest --testRegex=test/unit/.*\\.test\\.js",
+    "test:unit:ci": "npm run test:unit --reporters=default --reporters=github-actions",
     "test:me": "jest ",
     "test:unit:watch": "npm run test:unit -- --watch",
     "test:integration": "jest --testRegex=test/integration/.*\\.test\\.js",
@@ -25,15 +26,16 @@
     "@probot/adapter-aws-lambda-serverless": "^3.0.2",
     "deepmerge": "^4.3.1",
     "eta": "^2.0.1",
+    "jest-junit": "^16.0.0",
     "js-yaml": "^4.1.0",
     "node-cron": "^3.0.2",
     "probot": "^12.3.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^2.0.2",
     "@travi/any": "^2.1.8",
     "check-engine": "^1.10.1",
     "eslint": "^8.46.0",
-    "@eslint/eslintrc": "^2.0.2",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-node": "^11.1.0",
@@ -57,7 +59,21 @@
     "node": ">= 16.0.0"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "reporters": [
+      "default",
+      "jest-junit"
+    ]
+  },
+  "jest-junit": {
+    "suiteName": "jest tests",
+    "outputDirectory": "reports",
+    "outputName": "jest-junit.xml",
+    "uniqueOutputName": "false",
+    "classNameTemplate": "{classname}-{title}",
+    "titleTemplate": "{classname}-{title}",
+    "ancestorSeparator": " › ",
+    "usePathForSuiteName": "true"
   },
   "nodemonConfig": {
     "exec": "npm start",
