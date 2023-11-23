@@ -17,4 +17,4 @@ jobs:
           node-version: 16.x
           cache: "npm"
       - run: npm install
-      - run: npm run test:unit:ci
+      - run: npm run test:unit

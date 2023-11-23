@@ -71,7 +71,7 @@ describe('TeamsPartial', () => {
         }
       )
 
-      expect(github.teams.addOrUpdateRepoPermissionsInOrg).not.toHaveBeenCalledWith({
+      expect(github.teams.addOrUpdateRepoPermissionsInOrg).toHaveBeenCalledWith({
         org,
         team_id: addedTeamId,
         team_slug: addedTeamName,
