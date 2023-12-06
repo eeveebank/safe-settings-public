@@ -26,7 +26,7 @@
     "@operate-first/probot-metrics": "^1.0.0",
     "@probot/adapter-aws-lambda-serverless": "^3.0.2",
     "deepmerge": "^4.3.1",
-    "eta": "^2.0.1",
+    "eta": "^2.2.0",
     "jest-junit": "^16.0.0",
     "js-yaml": "^4.1.0",
     "node-cron": "^3.0.2",
