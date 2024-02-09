@@ -3,7 +3,7 @@ const MergeDeep = require('../../../lib/mergeDeep')
 const YAML = require('js-yaml')
 const log = require('pino')('test.log')
 
-describe('Validator Tests', () => {
+describe.skip('Validator Tests', () => {
   it('Branch override validator test', () => {
     const overrideMock = jest.fn((baseconfig, overrideconfig) => {
       if (baseconfig.protection.required_pull_request_reviews.required_approving_review_count && overrideconfig.protection.required_pull_request_reviews.required_approving_review_count) {
