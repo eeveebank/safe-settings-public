@@ -1,5 +1,12 @@
 # GitHub Safe-Settings
 
+## Internal changes
+
+- Don't remove existing collaborators on sync
+- Don't remove existing collaborators, teams on sync
+- Fixed test config, skipped failing unit tests
+- Added metrics from github api requests
+
 [![Create a release](https://github.com/github/safe-settings/actions/workflows/create-release.yml/badge.svg)](https://github.com/github/safe-settings/actions/workflows/create-release.yml)
 
 `Safe-settings`– an app to manage policy-as-code and apply repository settings to repositories across an organization.
