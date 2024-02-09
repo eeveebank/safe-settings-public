@@ -6,6 +6,7 @@
 - Don't remove existing collaborators, teams on sync
 - Fixed test config, skipped failing unit tests
 - Added metrics from github api requests
+- Ignore archived repos to prevent errors trying to apply settings
 
 [![Create a release](https://github.com/github/safe-settings/actions/workflows/create-release.yml/badge.svg)](https://github.com/github/safe-settings/actions/workflows/create-release.yml)
 
