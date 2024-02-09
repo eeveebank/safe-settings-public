@@ -45,9 +45,6 @@ describe('Autolinks', () => {
           { id: '7', key_prefix: 'NEW_ALPHA-UNDEFINED-', url_template: 'https://test/<num>', is_alphanumeric: false },
           { id: '8', key_prefix: 'NEW_ALPHA-FALSE-', url_template: 'https://test/<num>', is_alphanumeric: true },
           { id: '9', key_prefix: 'NEW_ALPHA-TRUE-', url_template: 'https://test/<num>', is_alphanumeric: false },
-          // todo: Remove when https://github.com/github/safe-settings/issues/521 is resolved:
-          // Currently, the number of entries/existing records must be different for updates to be made
-          { id: '10', key_prefix: 'REMOVE-HACK-', url_template: 'https://test/<num>', is_alphanumeric: true },
         ]
       })
 
@@ -141,7 +138,7 @@ describe('Autolinks', () => {
            ...repo
         })
 
-        expect(github.repos.deleteAutolink).toHaveBeenCalledTimes(6)
+        expect(github.repos.deleteAutolink).toHaveBeenCalledTimes(5)
         expect(github.repos.createAutolink).toHaveBeenCalledTimes(5)
       })
     })
