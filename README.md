@@ -2,9 +2,9 @@
 
 ## Internal changes
 
-- Don't remove existing collaborators on sync
 - Don't remove existing collaborators, teams on sync
 - Fixed test config, skipped failing unit tests
+- Support is_alphanumeric on autolink references
 - Added metrics from github api requests
 - Ignore archived repos to prevent errors trying to apply settings
 
