@@ -3,10 +3,13 @@
 ## Internal changes
 
 - Don't remove existing collaborators, teams on sync
+- Added support for custom team roles
 - Fixed test config, skipped failing unit tests
 - Support is_alphanumeric on autolink references
 - Added metrics from github api requests
 - Ignore archived repos to prevent errors trying to apply settings
+- Disabled environments due to https://github.com/github/safe-settings/issues/551
+- Disabled validator due to app crash if a validator throws
 
 [![Create a release](https://github.com/github/safe-settings/actions/workflows/create-release.yml/badge.svg)](https://github.com/github/safe-settings/actions/workflows/create-release.yml)
 
