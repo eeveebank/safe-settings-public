@@ -10,6 +10,7 @@
 - Ignore archived repos to prevent errors trying to apply settings
 - Disabled environments due to https://github.com/github/safe-settings/issues/551
 - Disabled validator due to app crash if a validator throws
+- Disabled milestones due to unit test indicating it's broken
 
 [![Create a release](https://github.com/github/safe-settings/actions/workflows/create-release.yml/badge.svg)](https://github.com/github/safe-settings/actions/workflows/create-release.yml)
 
