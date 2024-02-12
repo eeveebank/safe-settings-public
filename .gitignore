@@ -137,6 +137,6 @@ yarn.lock
 .aws-sam
 samconfig.toml
 
-# Jest
+# test file to be ignored
 reports
 test.log
