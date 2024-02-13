@@ -1,6 +1,9 @@
 const { when } = require('jest-when')
 const any = require('@travi/any')
 const Teams = require('../../../../lib/plugins/teamsPartial')
+const NopCommand = require('../../../../lib/nopcommand')
+
+jest.mock('../../../../lib/nopcommand')
 
 describe('TeamsPartial', () => {
   let github
@@ -14,12 +17,13 @@ describe('TeamsPartial', () => {
   const unchangedTeamId = any.integer()
   const org = 'bkeepers'
 
-  function configure (config) {
+  function configure (config, noop = false) {
     const log = { debug: jest.fn(), error: console.error }
-    return new Teams(undefined, github, { owner: 'bkeepers', repo: 'test' }, config, log)
+    return new Teams(noop, github, { owner: 'bkeepers', repo: 'test' }, config, log)
   }
 
   beforeEach(() => {
+    jest.clearAllMocks()
     github = {
       paginate: jest.fn()
         .mockResolvedValue()
@@ -45,6 +49,10 @@ describe('TeamsPartial', () => {
   })
 
   describe('sync', () => {
+    beforeEach(() => {
+      jest.clearAllMocks()
+    })
+
     it('syncs teams', async () => {
       const plugin = configure([
         { name: unchangedTeamName, permission: 'push' },
@@ -89,5 +97,31 @@ describe('TeamsPartial', () => {
         expect.any(Object)
       )
     }
+  })
+
+  describe('noop', () => {
+    beforeEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it.only('doesnt add deletions in summaries', async () => {
+      const plugin = configure([
+        { name: unchangedTeamName, permission: 'push' },
+        { name: updatedTeamName, permission: 'admin' },
+        { name: addedTeamName, permission: 'pull' }
+      ], true)
+
+      await plugin.sync()
+
+      expect(NopCommand).toHaveBeenCalledWith(
+        'TeamsPartial',
+        { owner: 'bkeepers', repo: 'test' },
+        null,
+        expect.objectContaining({
+          deletions: {}
+        }),
+        'INFO'
+      );
+    })
   })
 })
