@@ -38,9 +38,9 @@ describe('TeamsPartial', () => {
       repos: {
         listTeams: jest.fn().mockResolvedValue({
           data: [
-            { id: unchangedTeamId, slug: unchangedTeamName, permission: 'push' },
-            { id: removedTeamId, slug: removedTeamName, permission: 'push' },
-            { id: updatedTeamId, slug: updatedTeamName, permission: 'pull' }
+            { id: unchangedTeamId, slug: unchangedTeamName, name: unchangedTeamName, permission: 'push' },
+            { id: removedTeamId, slug: removedTeamName, name: removedTeamName, permission: 'push' },
+            { id: updatedTeamId, slug: updatedTeamName, name: updatedTeamName, permission: 'pull' }
           ]
         })
       },
@@ -104,10 +104,10 @@ describe('TeamsPartial', () => {
       jest.clearAllMocks()
     })
 
-    it.only('doesnt add deletions in summaries', async () => {
+    it('doesnt add deletions in summaries', async () => {
       const plugin = configure([
         { name: unchangedTeamName, permission: 'push' },
-        { name: updatedTeamName, permission: 'admin' },
+        { name: updatedTeamName, permission: 'pull' },
         { name: addedTeamName, permission: 'pull' }
       ], true)
 
@@ -118,10 +118,19 @@ describe('TeamsPartial', () => {
         { owner: 'bkeepers', repo: 'test' },
         null,
         expect.objectContaining({
-          deletions: {}
+          deletions: {},
         }),
         'INFO'
       );
+    })
+
+    it('doesnt add summary if no additions/modifications', async () => {
+      const plugin = configure([
+        { name: unchangedTeamName, permission: 'push' },
+        { name: updatedTeamName, permission: 'pull' }
+      ], true)
+
+      expect(await plugin.sync()).toBe(undefined)
     })
   })
 })

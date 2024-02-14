@@ -59,7 +59,7 @@ describe('Repository', () => {
       })
     })
 
-    it.only('syncs topics', () => {
+    it('syncs topics', () => {
       const plugin = configure({
         topics: ['foo', 'bar']
       })
