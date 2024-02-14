@@ -98,4 +98,19 @@ describe('CollaboratorsPartial', () => {
       );
     })
   })
+
+  it('doesnt add summary if no additions/modifications', async () => {
+    const plugin = configure([
+      { username: 'bkeepers', permission: 'admin' },
+    ], true)
+
+    github.repos.listCollaborators.mockResolvedValueOnce({
+      data: [
+        { login: 'bkeepers', permissions: { admin: true, push: true, pull: true } },
+        { login: 'removed-user', permissions: { admin: false, push: true, pull: true } },
+      ]
+    })
+
+    expect(await plugin.sync()).toBe(undefined)
+  })
 })
