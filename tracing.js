@@ -17,7 +17,7 @@ if (OTEL_EXPORTER_OTLP_ENDPOINT) {
     traceExporter,
     instrumentations: [
       new HttpInstrumentation({
-        ignoreIncomingPaths: ['/health', '/metrics']
+        ignoreIncomingPaths: ['/health', '/metrics', '/ping']
       })
     ],
     resource: new Resource({
