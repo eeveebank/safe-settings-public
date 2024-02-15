@@ -1,7 +1,6 @@
 // Configuring manually due to https://github.com/open-telemetry/opentelemetry-js-contrib/issues/1773
 const process = require('process')
-const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node')
-const instrumentations = getNodeAutoInstrumentations()
+const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http')
 const opentelemetry = require('@opentelemetry/sdk-node')
 const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-grpc')
 const { Resource } = require('@opentelemetry/resources')
@@ -16,7 +15,11 @@ if (OTEL_EXPORTER_OTLP_ENDPOINT) {
 
   const sdk = new opentelemetry.NodeSDK({
     traceExporter,
-    instrumentations: [instrumentations],
+    instrumentations: [
+      new HttpInstrumentation({
+        ignoreIncomingPaths: ['/health', '/metrics']
+      })
+    ],
     resource: new Resource({
       [SemanticResourceAttributes.SERVICE_NAME]: 'safe-settings'
     })
