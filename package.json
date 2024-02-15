@@ -23,6 +23,8 @@
   "author": "Yadhav Jayaraman",
   "license": "ISC",
   "dependencies": {
+    "@opentelemetry/api": "^1.7.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.41.1",
     "@operate-first/probot-metrics": "^1.0.0",
     "@probot/adapter-aws-lambda-serverless": "^3.0.2",
     "deepmerge": "^4.3.1",
