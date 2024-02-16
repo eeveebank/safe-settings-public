@@ -5,6 +5,7 @@ const opentelemetry = require('@opentelemetry/sdk-node')
 const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-grpc')
 const { Resource } = require('@opentelemetry/resources')
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions')
+const { W3CTraceContextPropagator } = require('@opentelemetry/core')
 
 const { OTEL_EXPORTER_OTLP_ENDPOINT } = process.env
 
@@ -14,6 +15,7 @@ if (OTEL_EXPORTER_OTLP_ENDPOINT) {
   })
 
   const sdk = new opentelemetry.NodeSDK({
+    textMapPropagator: new W3CTraceContextPropagator(),
     traceExporter,
     instrumentations: [
       new HttpInstrumentation({
