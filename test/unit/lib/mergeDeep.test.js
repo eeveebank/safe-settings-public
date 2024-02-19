@@ -1316,7 +1316,7 @@ entries:
     //console.log(`diffs ${JSON.stringify(merged, null, 2)}`)
   })
 
-  it('Has changes with additions to arrays', () => {
+  it('Has changes with additions to branch protection checks', () => {
     const target = {
       branches: [
         {
@@ -1362,6 +1362,72 @@ entries:
                 contexts: [
                   'test2'
                 ]
+              },
+            },
+          }
+        ]
+      },
+      hasChanges: true
+    }
+
+    const ignorableFields = []
+    const mergeDeep = new MergeDeep(
+      log,
+      jest.fn(),
+      ignorableFields
+    );
+    const changes = mergeDeep.compareDeep(target, source)
+    expect(changes).toEqual(expected)
+  })
+
+  it('Has modifications to branch protection checks', () => {
+    const target = {
+      branches: [
+        {
+          name: 'master',
+          protection: {
+            required_status_checks: {
+              strict: true,
+              checks: [{
+                context: 'test1',
+                app_id: '123'
+              }],
+            }
+          }
+        }
+      ]
+    }
+
+    const source = {
+      branches: [
+        {
+          name: 'master',
+          protection: {
+            required_status_checks: {
+              strict: true,
+              checks: [{
+                context: 'test1',
+                app_id: '345'
+              }],
+            }
+          }
+        }
+      ]
+    }
+
+    const expected = {
+      additions: {},
+      deletions: {},
+      modifications: {
+        branches: [
+          {
+            name: "master",
+            protection: {
+              required_status_checks: {
+                checks: [{
+                  context: 'test1',
+                  app_id: '345'
+                }]
               },
             },
           }
