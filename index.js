@@ -459,12 +459,7 @@ module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) =>
     robot.log.debug(`Updating check run ${JSON.stringify(params)}`)
     await context.octokit.checks.update(params)
 
-    // guarding against null value from upstream libary that is
-    // causing a 404 and the check to stall
-    // from issue: https://github.com/github/safe-settings/issues/185#issuecomment-1075240374
-    if (check_suite.before === '0000000000000000000000000000000000000000') {
-      check_suite.before = check_suite.pull_requests[0].base.sha
-    }
+    check_suite.before = check_suite.pull_requests[0].base.sha
     params = Object.assign(context.repo(), { basehead: `${check_suite.before}...${check_suite.after}` })
     const changes = await context.octokit.repos.compareCommitsWithBasehead(params)
     const files = changes.data.files.map(f => { return f.filename })
