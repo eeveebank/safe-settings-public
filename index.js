@@ -472,14 +472,23 @@ module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) =>
     }
 
     const repoChanges = getChangedRepoConfigName(new Glob('.github/repos/*.yml'), files, context.repo().owner)
-    if (repoChanges.length > 0) {
+    const repoModified = repoChanges.length > 0
+
+    const subOrgChanges = getChangedSubOrgConfigName(new Glob('.github/suborgs/*.yml'), files, context.repo().owner)
+    const subOrgModified = subOrgChanges.length > 0
+
+    if (repoModified && subOrgModified) {
+      robot.log.debug('Both repo and subOrg change detected, doing a full synch...')
+      return syncAllSettings(true, context, context.repo(), pull_request.head.ref)
+    }
+
+    if (repoModified) {
       return Promise.all(repoChanges.map(repo => {
         return syncSettings(true, context, repo, pull_request.head.ref)
       }))
     }
 
-    const subOrgChanges = getChangedSubOrgConfigName(new Glob('.github/suborgs/*.yml'), files, context.repo().owner)
-    if (subOrgChanges.length) {
+    if (subOrgModified) {
       return Promise.all(subOrgChanges.map(suborg => {
         return syncSubOrgSettings(true, context, suborg, context.repo(), pull_request.head.ref)
       }))
