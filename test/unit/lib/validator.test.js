@@ -16,15 +16,9 @@ describe('Validator Tests', () => {
         return overrideconfig.protection.required_pull_request_reviews.required_approving_review_count >= baseconfig.protection.required_pull_request_reviews.required_approving_review_count
       }
       return true
-
-      // console.log(`Branch override validator, baseconfig ${baseconfig} overrideconfig ${overrideconfig}`)
-      // return false
     })
 
-    const configMock = jest.fn((baseconfig) => {
-      console.log(`Branch config validator, baseconfig ${baseconfig}`)
-      return false
-    })
+    const configMock = jest.fn((baseconfig) => false)
     DeploymentConfig.overridevalidators = { branches: { canOverride: overrideMock, error: 'Branch overrideValidators.error' } }
     DeploymentConfig.configvalidators = { branches: { isValid: configMock, error: 'Branch configValidators.error' } }
 
@@ -58,30 +52,17 @@ describe('Validator Tests', () => {
                 enforce_admins: false
         `)
 
-    try {
-      const ignorableFields = []
-      const mergeDeep = new MergeDeep(log, {}, ignorableFields)
-      mergeDeep.mergeDeep(baseconfig, overrideconfig)
-      // const merged = mergeDeep.mergeDeep(baseconfig, overrideconfig)
-      //    expect(() => mergeDeep.mergeDeep(baseconfig, overrideconfig)).toThrow('you are using the wrong JDK');
-    } catch (err) {
-      expect(err).toBeDefined()
-      console.log(JSON.stringify(err))
-      expect(err).toEqual(Error('Branch overrideValidators.error'))
-    }
+    const ignorableFields = []
+    const mergeDeep = new MergeDeep(log, {}, ignorableFields)
+
+    expect(() => mergeDeep.mergeDeep(baseconfig, overrideconfig)).toThrow('Branch overrideValidators.error')
     expect(overrideMock.mock.calls.length).toBe(1)
   })
 
   it('Repository override validator test', () => {
-    const overrideMock = jest.fn((baseconfig, overrideconfig) => {
-      console.log(`Repo override validator, baseconfig ${baseconfig} overrideconfig ${overrideconfig}`)
-      return false
-    })
+    const overrideMock = jest.fn(() => false)
 
-    const configMock = jest.fn((baseconfig) => {
-      console.log(`Repo config validator, baseconfig ${baseconfig}`)
-      return false
-    })
+    const configMock = jest.fn(() => false)
     DeploymentConfig.overridevalidators = { repository: { canOverride: overrideMock, error: 'Repo overrideValidators.error' } }
     DeploymentConfig.configvalidators = { repository: { isValid: configMock, error: 'Repo configValidators.error' } }
 
@@ -116,27 +97,16 @@ describe('Validator Tests', () => {
     - newone
         `)
 
-    try {
-      const ignorableFields = []
-      const mergeDeep = new MergeDeep(log, {}, ignorableFields)
-      mergeDeep.mergeDeep(baseconfig, overrideconfig)
-    } catch (err) {
-      expect(err).toBeDefined()
-      expect(err).toEqual(Error('Repo overrideValidators.error'))
-    }
+    const ignorableFields = []
+    const mergeDeep = new MergeDeep(log, {}, ignorableFields)
+    expect(() => mergeDeep.mergeDeep(baseconfig, overrideconfig)).toThrow('Repo overrideValidators.error')
     expect(overrideMock.mock.calls.length).toBe(1)
   })
 
   it('Repository config validator test', () => {
-    const overrideMock = jest.fn((baseconfig, overrideconfig) => {
-      console.log(`Repo override validator, baseconfig ${baseconfig} overrideconfig ${overrideconfig}`)
-      return true
-    })
+    const overrideMock = jest.fn(() => true)
 
-    const configMock = jest.fn((baseconfig) => {
-      console.log(`Repo config validator, baseconfig ${baseconfig}`)
-      return false
-    })
+    const configMock = jest.fn(() => false)
     DeploymentConfig.overridevalidators = { repository: { canOverride: overrideMock, error: 'Repo overrideValidators.error' } }
     DeploymentConfig.configvalidators = { repository: { isValid: configMock, error: 'Repo configValidators.error' } }
 
@@ -171,14 +141,10 @@ describe('Validator Tests', () => {
     - newone
         `)
 
-    try {
-      const ignorableFields = []
-      const mergeDeep = new MergeDeep(log, ignorableFields)
-      mergeDeep.mergeDeep(baseconfig, overrideconfig)
-    } catch (err) {
-      expect(err).toBeDefined()
-      expect(err).toEqual(Error('Repo configValidators.error'))
-    }
+    const ignorableFields = []
+    const mergeDeep = new MergeDeep(log, {}, ignorableFields)
+
+    expect(() => mergeDeep.mergeDeep(baseconfig, overrideconfig)).toThrow('Repo configValidators.error')
     expect(configMock.mock.calls.length).toBe(1)
   })
 
@@ -187,10 +153,7 @@ describe('Validator Tests', () => {
       throw new Error('Custom message')
     })
 
-    const configMock = jest.fn((baseconfig) => {
-      console.log(`Branch config validator, baseconfig ${baseconfig}`)
-      return false
-    })
+    const configMock = jest.fn(() => false)
     DeploymentConfig.overridevalidators = { branches: { canOverride: overrideMock, error: 'Branch overrideValidators.error' } }
     DeploymentConfig.configvalidators = { branches: { isValid: configMock, error: 'Branch configValidators.error' } }
 

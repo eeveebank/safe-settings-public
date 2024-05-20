@@ -120,6 +120,23 @@ overridevalidators:
 
 A sample of `deployment-settings` file is found [here](docs/sample-settings/sample-deployment-settings.yml).
 
+#### Specific validation messages
+
+Validators can also throw errors rather than returning `false` in order to provide specific messages:
+
+```yaml
+configvalidators:
+  - plugin: collaborators
+    error: |
+      `Invalid collaborators config`
+    script: |
+      if (baseconfig.permission == 'admin') {
+        throw new Error(`collaborator permission: admin not allowed`)
+      }
+
+      return true
+```
+
 ### Performance
 When there are 1000s of repos to be managed -- and there is a global settings change -- safe-settings will have to work efficiently and only make the necessary API calls.
 
