@@ -2,9 +2,14 @@
 const DeploymentConfig = require('../../../lib/deploymentConfig')
 const MergeDeep = require('../../../lib/mergeDeep')
 const YAML = require('js-yaml')
-const log = require('pino')('test.log')
+
+const log = { debug: jest.fn(), error: jest.fn() }
 
 describe('Validator Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
   it('Branch override validator test', () => {
     const overrideMock = jest.fn((baseconfig, overrideconfig) => {
       if (baseconfig.protection.required_pull_request_reviews.required_approving_review_count && overrideconfig.protection.required_pull_request_reviews.required_approving_review_count) {
@@ -113,7 +118,7 @@ describe('Validator Tests', () => {
 
     try {
       const ignorableFields = []
-      const mergeDeep = new MergeDeep(log, ignorableFields)
+      const mergeDeep = new MergeDeep(log, {}, ignorableFields)
       mergeDeep.mergeDeep(baseconfig, overrideconfig)
     } catch (err) {
       expect(err).toBeDefined()
@@ -175,5 +180,50 @@ describe('Validator Tests', () => {
       expect(err).toEqual(Error('Repo configValidators.error'))
     }
     expect(configMock.mock.calls.length).toBe(1)
+  })
+
+  it('override validator supports custom messages', () => {
+    const overrideMock = jest.fn(() => {
+      throw new Error('Custom message')
+    })
+
+    const configMock = jest.fn((baseconfig) => {
+      console.log(`Branch config validator, baseconfig ${baseconfig}`)
+      return false
+    })
+    DeploymentConfig.overridevalidators = { branches: { canOverride: overrideMock, error: 'Branch overrideValidators.error' } }
+    DeploymentConfig.configvalidators = { branches: { isValid: configMock, error: 'Branch configValidators.error' } }
+
+    const overrideconfig = {
+      branches: {}
+    }
+    const baseconfig = {
+      branches: {}
+    }
+
+    const mergeDeep = new MergeDeep(log, {}, [])
+    expect(() => mergeDeep.mergeDeep(baseconfig, overrideconfig)).toThrow('Custom message')
+    expect(log.error).toHaveBeenCalledWith(`MergeDeep Error in calling overridevalidator for key branches Error: Custom message`)
+  })
+
+  it('config validator supports custom messages', () => {
+    const overrideMock = jest.fn(() => true)
+
+    const configMock = jest.fn(() => {
+      throw new Error('Custom message')
+    })
+    DeploymentConfig.overridevalidators = { branches: { canOverride: overrideMock, error: 'Branch overrideValidators.error' } }
+    DeploymentConfig.configvalidators = { branches: { isValid: configMock, error: 'Branch configValidators.error' } }
+
+    const overrideconfig = {
+      branches: {}
+    }
+    const baseconfig = {
+      branches: {}
+    }
+
+    const mergeDeep = new MergeDeep(log, {}, [])
+    expect(() => mergeDeep.mergeDeep(baseconfig, overrideconfig)).toThrow('Custom message')
+    expect(log.error).toHaveBeenCalledWith(`MergeDeep Error in calling configvalidator for key branches Error: Custom message`)
   })
 })
