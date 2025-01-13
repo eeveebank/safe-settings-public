@@ -92,6 +92,31 @@ module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) =>
     }
   }
 
+  async function syncTeamSettings (nop, context, repo = context.repo(), ref) {
+    try {
+      deploymentConfig = await loadYamlFileSystem()
+      robot.log.debug(`deploymentConfig is ${JSON.stringify(deploymentConfig)}`)
+      const configManager = new ConfigManager(context, ref)
+      const runtimeConfig = await configManager.loadGlobalSettingsYaml()
+      const config = Object.assign({}, deploymentConfig, runtimeConfig)
+      robot.log.debug(`config for ref ${ref} is ${JSON.stringify(config)}`)
+      return Settings.syncTeams(nop, context, repo, config, ref)
+    } catch (e) {
+      if (nop) {
+        let filename = env.SETTINGS_FILE_PATH
+        if (!deploymentConfig) {
+          filename = env.DEPLOYMENT_CONFIG_FILE
+          deploymentConfig = {}
+        }
+        const nopcommand = new NopCommand(filename, repo, null, e, 'ERROR')
+        robot.log.error(`NOPCOMMAND ${JSON.stringify(nopcommand)}`)
+        Settings.handleError(nop, context, repo, deploymentConfig, ref, nopcommand)
+      } else {
+        throw e
+      }
+    }
+  }
+
   /**
    * Loads the deployment config file from file system
    * Do this once when the app starts and then return the cached value
@@ -155,6 +180,27 @@ module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) =>
       return { repo: file.match(settingPattern)[1], owner }
     })
     return configs
+  }
+
+  function getAllChangedTeamConfigs (payload, owner) {
+    const settingPattern = new Glob('.github/teams/*.yml')
+    const added = payload.commits.map(c => {
+      return (c.added.filter(s => {
+        robot.log.debug(JSON.stringify(s))
+        return (s.search(settingPattern) >= 0)
+      }))
+    }).flat(2)
+    const modified = payload.commits.map(c => {
+      return (c.modified.filter(s => {
+        robot.log.debug(JSON.stringify(s))
+        return (s.search(settingPattern) >= 0)
+      }))
+    }).flat(2)
+    const changes = added.concat(modified)
+    return changes.map(file => {
+      robot.log.debug(`${JSON.stringify(file)}`)
+      return { team: file.match(settingPattern)[1], owner }
+    })
   }
 
   function getChangedRepoConfigName (glob, files, owner) {
@@ -240,6 +286,13 @@ module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) =>
       return syncAllSettings(false, context)
     }
 
+    const teamChanges = getAllChangedTeamConfigs(payload, context.repo().owner)
+    if (teamChanges.length > 0) {
+      return Promise.all(teamChanges.map(repo => {
+        return syncTeamSettings(false, context, repo)
+      }))
+    }
+
     const repoChanges = getAllChangedRepoConfigs(payload, context.repo().owner)
     if (repoChanges.length > 0) {
       return Promise.all(repoChanges.map(repo => {
@@ -310,8 +363,7 @@ module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) =>
   const member_change_events = [
     'member',
     'team.added_to_repository',
-    'team.removed_from_repository',
-    'team.edited'
+    'team.removed_from_repository'
   ]
 
   robot.on(member_change_events, async context => {
@@ -471,15 +523,26 @@ module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) =>
       return syncAllSettings(true, context, context.repo(), pull_request.head.ref)
     }
 
+    const teamChanges = getChangedRepoConfigName(new Glob('.github/teams/*.yml'), files, context.repo().owner)
+    const teamModified = teamChanges.length > 0
+
     const repoChanges = getChangedRepoConfigName(new Glob('.github/repos/*.yml'), files, context.repo().owner)
     const repoModified = repoChanges.length > 0
 
     const subOrgChanges = getChangedSubOrgConfigName(new Glob('.github/suborgs/*.yml'), files, context.repo().owner)
     const subOrgModified = subOrgChanges.length > 0
 
-    if (repoModified && subOrgModified) {
-      robot.log.debug('Both repo and subOrg change detected, doing a full synch...')
+    if (
+      (repoModified && subOrgModified) ||
+      (repoModified && teamModified) ||
+      (subOrgModified && teamModified)
+    ) {
+      robot.log.debug('Changes detected across suborg/repos/teams folders, doing a full synch...')
       return syncAllSettings(true, context, context.repo(), pull_request.head.ref)
+    }
+
+    if (teamModified) {
+      return syncTeamSettings(true, context, context.repo(), pull_request.head.ref)
     }
 
     if (repoModified) {
@@ -513,6 +576,23 @@ module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) =>
     const { sender } = payload
     robot.log.debug('repository.created payload from ', JSON.stringify(sender))
     return syncSettings(false, context)
+  })
+
+  robot.on(['team.created', 'team.edited'], async context => {
+    robot.log.info(`team.${context.payload.action} event for ${context.payload.team.slug}`)
+    const repo = {
+      repo: env.ADMIN_REPO,
+      owner: context.payload.organization.login,
+      team: context.payload.team.slug
+    }
+
+    const enhancedContext = {
+      ...context,
+      // Workaround: this is required deep in configManager
+      repo: () => repo
+    }
+
+    return syncTeamSettings(false, enhancedContext)
   })
 
   if (process.env.CRON) {
