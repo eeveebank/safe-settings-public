@@ -24,32 +24,32 @@ describe('Settings Tests', () => {
   beforeEach(() => {
     const mockOctokit = jest.mocked(Octokit)
     const content = Buffer.from(`
-suborgrepos:    
-- new-repo        
-#- test*    
-#- secret*  
-     
+suborgrepos:
+- new-repo
+#- test*
+#- secret*
+
 suborgteams:
 - core
 
-suborgproperties:     
+suborgproperties:
 - EDP: true
 - do_no_delete: true
-       
-teams:                 
-  - name: core        
-    permission: bypass 
+
+teams:
+  - name: core
+    permission: bypass
   - name: docss
     permission: pull
   - name: docs
     permission: pull
-  
-validator:
-  pattern: '[a-zA-Z0-9_-]+_[a-zA-Z0-9_-]+.*' 
 
-repository:   
+validator:
+  pattern: '[a-zA-Z0-9_-]+_[a-zA-Z0-9_-]+.*'
+
+repository:
   # A comma-separated list of topics to set on the repository
-  topics:   
+  topics:
   - frontend
      `).toString('base64');
     mockOctokit.repos = {
@@ -191,6 +191,47 @@ repository:
     })
   }) // restrictedRepos
 
+  describe('getRepoOverrideConfig', () => {
+    describe('repository defined in a file using the .yaml extension', () => {
+      beforeEach(() => {
+        stubConfig = {
+          repoConfigs: {
+            'repository.yaml': { repository: { name: 'repository', config: 'config1' } }
+          }
+        }
+      })
+
+      it('Picks up a repository defined in file using the .yaml extension', () => {
+        settings = createSettings(stubConfig)
+        settings.repoConfigs = stubConfig.repoConfigs
+        const repoConfig = settings.getRepoOverrideConfig('repository')
+
+        expect(typeof repoConfig).toBe('object')
+        expect(repoConfig).not.toBeNull()
+        expect(Object.keys(repoConfig).length).toBeGreaterThan(0)
+      })
+    })
+
+    describe('repository defined in a file using the .yml extension', () => {
+      beforeEach(() => {
+        stubConfig = {
+          repoConfigs: {
+            'repository.yml': { repository: { name: 'repository', config: 'config1' } }
+          }
+        }
+      })
+
+      it('Picks up a repository defined in file using the .yml extension', () => {
+        settings = createSettings(stubConfig)
+        settings.repoConfigs = stubConfig.repoConfigs
+        const repoConfig = settings.getRepoOverrideConfig('repository')
+
+        expect(typeof repoConfig).toBe('object')
+        expect(repoConfig).not.toBeNull()
+        expect(Object.keys(repoConfig).length).toBeGreaterThan(0)
+      })
+    })
+  }) // repoOverrideConfig
   describe('loadConfigs', () => {
     describe('load suborg configs', () => {
       beforeEach(() => {
@@ -199,29 +240,29 @@ repository:
           }
         }
         subOrgConfig = yaml.load(`
-          suborgrepos:    
-          - new-repo         
-               
-          suborgproperties:     
+          suborgrepos:
+          - new-repo
+
+          suborgproperties:
           - EDP: true
           - do_no_delete: true
-                 
-          teams:                 
-            - name: core        
-              permission: bypass 
+
+          teams:
+            - name: core
+              permission: bypass
             - name: docss
               permission: pull
             - name: docs
               permission: pull
-            
+
           validator:
-            pattern: '[a-zA-Z0-9_-]+_[a-zA-Z0-9_-]+.*' 
-          
-          repository:   
+            pattern: '[a-zA-Z0-9_-]+_[a-zA-Z0-9_-]+.*'
+
+          repository:
             # A comma-separated list of topics to set on the repository
-            topics:   
+            topics:
             - frontend
-          
+
           `)
 
       })
