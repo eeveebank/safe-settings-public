@@ -16,18 +16,25 @@ describe('Teams', () => {
 
   function configure (config) {
     const log = { debug: jest.fn(), error: console.error }
-    return new Teams(undefined, github, { owner: 'bkeepers', repo: 'test' }, config, log)
+    const errors = []
+    return new Teams(undefined, github, { owner: 'bkeepers', repo: 'test' }, config, log, errors)
   }
 
   beforeEach(() => {
     github = {
       paginate: jest.fn()
+<<<<<<< HEAD
         .mockResolvedValue()
+||||||| 94b3349
+      paginate: jest.fn().mockResolvedValue(),
+=======
+>>>>>>> main-enterprise
         .mockImplementation(async (fetch) => {
           const response = await fetch()
           return response.data
         }),
       teams: {
+        create: jest.fn().mockResolvedValue(),
         getByName: jest.fn(),
         addOrUpdateRepoPermissionsInOrg: jest.fn().mockResolvedValue()
       },
@@ -40,7 +47,7 @@ describe('Teams', () => {
           ]
         })
       },
-      request: jest.fn()
+      request: jest.fn().mockResolvedValue()
     }
   })
 
@@ -83,7 +90,13 @@ describe('Teams', () => {
       expectTeamDeleted(removedTeamName)
     })
 
+<<<<<<< HEAD
     function expectTeamDeleted(teamSlug) {
+||||||| 94b3349
+    function expectTeamDeleted(teamId) {
+=======
+    function expectTeamDeleted (teamSlug) {
+>>>>>>> main-enterprise
       expect(github.request).toHaveBeenCalledWith(
         'DELETE /orgs/:owner/teams/:team_slug/repos/:owner/:repo',
         {

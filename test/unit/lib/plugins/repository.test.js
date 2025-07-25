@@ -16,11 +16,25 @@ describe('Repository', () => {
   log.debug = jest.fn()
   log.error = jest.fn()
 
+<<<<<<< HEAD
 
+||||||| 94b3349
+  let github
+  let log
+=======
+>>>>>>> main-enterprise
   function configure (config) {
+<<<<<<< HEAD
     const noop = false
     const errors = []
     return new Repository(noop, github, { owner: 'bkeepers', repo: 'test' }, config, 1, log, errors)
+||||||| 94b3349
+    return new Repository(github, { owner: 'bkeepers', repo: 'test' }, config, 1, log)
+=======
+    const nop = false
+    const errors = []
+    return new Repository(nop, github, { owner: 'bkeepers', repo: 'test' }, config, 1, log, errors)
+>>>>>>> main-enterprise
   }
 
   describe('sync', () => {
@@ -59,7 +73,7 @@ describe('Repository', () => {
       })
     })
 
-    it('syncs topics', () => {
+    it.only('syncs topics', () => {
       const plugin = configure({
         topics: ['foo', 'bar']
       })

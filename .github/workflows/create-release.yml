@@ -1,15 +1,17 @@
 name: Create a release
 on:
-   workflow_dispatch:
+  workflow_dispatch:
 #  push:
 #    branches:
 #      - main-enterprise
 
-   
-
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: write
+  packages: write
 
 jobs:
   build:
@@ -18,28 +20,28 @@ jobs:
     outputs:
       release: ${{ steps.finalrelease.outputs.release }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 16.x
-          cache: 'npm'
+          cache: "npm"
       - run: npm install
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2
       - name: Log in to the Container registry
-        uses: docker/login-action@v2 
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Docker Image Locally
-        uses: docker/build-push-action@master
+        uses: docker/build-push-action@1dc73863535b631f98b2378be8619f83b136f4a0
         with:
           context: .
           file: ./Dockerfile
           load: true
-          tags:  |
+          tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-enterprise
       - name: Inspect the Docker Image
         run: |
@@ -50,14 +52,14 @@ jobs:
           docker run --env APP_ID=${{ secrets.APP_ID }} --env PRIVATE_KEY=${{ secrets.PRIVATE_KEY }} --env WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }} -d -p 3000:3000 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-enterprise
           sleep 10
           curl http://localhost:3000
-      - name: Tag a final release 
+      - name: Tag a final release
         id: finalrelease
-        uses: actionsdesk/semver@0.6.0-rc.10
+        uses: actionsdesk/semver@82aa4310e4e21c59cd0020007a4278e733e81dcb
         with:
           bump: final
       - name: Push Docker Image
         if: ${{ success() }}
-        uses: docker/build-push-action@master
+        uses: docker/build-push-action@1dc73863535b631f98b2378be8619f83b136f4a0
         with:
           context: .
           file: ./Dockerfile
@@ -67,6 +69,28 @@ jobs:
           platforms: linux/amd64,linux/arm64
           provenance: false
           sbom: false
+
+  helm:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Prepare
+        run: |
+          # OCI standard enforces lower-case paths
+          GHCR_REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          HELM_REPO=$(echo "oci://ghcr.io/${{ github.repository_owner }}/helm-charts" | tr '[:upper:]' '[:lower:]')
+          echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
+          echo "HELM_REPO=$HELM_REPO" >> $GITHUB_ENV
+
+      - name: Publish Helm charts
+        run: |
+          cd helm
+          helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
+          helm package --app-version ${{ needs.build.outputs.release }} --version ${{ needs.build.outputs.release }} safe-settings
+          helm push safe-settings-${{ needs.build.outputs.release }}.tgz ${{ env.HELM_REPO }}
 
   #trigger-deployment:
   #  needs: build
