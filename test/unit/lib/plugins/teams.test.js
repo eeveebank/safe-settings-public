@@ -16,31 +16,39 @@ describe('Teams', () => {
 
   function configure (config) {
     const log = { debug: jest.fn(), error: console.error }
-    return new Teams(undefined, github, { owner: 'bkeepers', repo: 'test' }, config, log)
+    const errors = []
+    return new Teams(undefined, github, { owner: 'bkeepers', repo: 'test' }, config, log, errors)
   }
 
   beforeEach(() => {
     github = {
       paginate: jest.fn()
-        .mockResolvedValue()
-        .mockImplementation(async (fetch) => {
-          const response = await fetch()
+        .mockImplementation(async (fetch, params) => {
+          if (typeof fetch !== 'function') {
+            return []
+          }
+          const response = await fetch(params)
           return response.data
         }),
-      teams: {
-        getByName: jest.fn(),
-        addOrUpdateRepoPermissionsInOrg: jest.fn().mockResolvedValue()
+      rest: {
+        teams: {
+          create: jest.fn().mockResolvedValue(),
+          getByName: jest.fn(),
+          addOrUpdateRepoPermissionsInOrg: jest.fn().mockResolvedValue()
+        },
+        repos: {
+          listTeams: jest.fn().mockResolvedValue({
+            data: [
+              { id: unchangedTeamId, slug: unchangedTeamName, permission: 'push' },
+              { id: removedTeamId, slug: removedTeamName, permission: 'push' },
+              { id: updatedTeamId, slug: updatedTeamName, permission: 'pull' }
+            ]
+          })
+        }
       },
-      repos: {
-        listTeams: jest.fn().mockResolvedValue({
-          data: [
-            { id: unchangedTeamId, slug: unchangedTeamName, permission: 'push' },
-            { id: removedTeamId, slug: removedTeamName, permission: 'push' },
-            { id: updatedTeamId, slug: updatedTeamName, permission: 'pull' }
-          ]
-        })
-      },
-      request: jest.fn()
+      request: Object.assign(jest.fn().mockResolvedValue(), {
+        endpoint: jest.fn().mockReturnValue({})
+      })
     }
   })
 
@@ -52,7 +60,7 @@ describe('Teams', () => {
         { name: addedTeamName, permission: 'pull' }
       ])
 
-      when(github.teams.getByName)
+      when(github.rest.teams.getByName)
         .defaultResolvedValue({})
         .calledWith({ org: 'bkeepers', team_slug: addedTeamName })
         .mockResolvedValue({ data: { id: addedTeamId } })
@@ -71,7 +79,7 @@ describe('Teams', () => {
         }
       )
 
-      expect(github.teams.addOrUpdateRepoPermissionsInOrg).toHaveBeenCalledWith({
+      expect(github.rest.teams.addOrUpdateRepoPermissionsInOrg).toHaveBeenCalledWith({
         org,
         team_id: addedTeamId,
         team_slug: addedTeamName,
@@ -83,7 +91,7 @@ describe('Teams', () => {
       expectTeamDeleted(removedTeamName)
     })
 
-    function expectTeamDeleted(teamSlug) {
+    function expectTeamDeleted (teamSlug) {
       expect(github.request).toHaveBeenCalledWith(
         'DELETE /orgs/:owner/teams/:team_slug/repos/:owner/:repo',
         {
