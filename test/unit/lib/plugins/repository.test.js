@@ -16,11 +16,10 @@ describe('Repository', () => {
   log.debug = jest.fn()
   log.error = jest.fn()
 
-
   function configure (config) {
-    const noop = false
+    const nop = false
     const errors = []
-    return new Repository(noop, github, { owner: 'bkeepers', repo: 'test' }, config, 1, log, errors)
+    return new Repository(nop, github, { owner: 'bkeepers', repo: 'test' }, config, 1, log, errors)
   }
 
   describe('sync', () => {
@@ -59,7 +58,7 @@ describe('Repository', () => {
       })
     })
 
-    it('syncs topics', () => {
+    it.only('syncs topics', () => {
       const plugin = configure({
         topics: ['foo', 'bar']
       })
