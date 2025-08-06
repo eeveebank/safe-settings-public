@@ -7,11 +7,13 @@ const ConfigManager = require('./lib/configManager')
 const NopCommand = require('./lib/nopcommand')
 const env = require('./lib/env')
 const metrics = require('@operate-first/probot-metrics')
+const { addDisableReviewDelegationRoute } = require('./hack-review-delegation')
 
 let deploymentConfig
 
 module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) => {
   metrics.exposeMetrics(getRouter(), '/metrics')
+  addDisableReviewDelegationRoute(robot, getRouter(), loadYamlFileSystem)
 
   async function syncAllSettings (nop, context, repo = context.repo(), ref) {
     try {
