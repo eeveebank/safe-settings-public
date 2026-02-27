@@ -53,4 +53,21 @@ describe('ReviewRequestDelegation', () => {
     const { input } = github.graphql.mock.calls[0][1]
     expect(input.excludedTeamMembers).toBeUndefined()
   })
+
+  it('does not update when member lookup fails', async () => {
+    github.paginate.mockRejectedValueOnce(new Error('boom'))
+
+    const plugin = new ReviewRequestDelegation(
+      false,
+      github,
+      { owner: 'acme', slug: 'team-slug' },
+      { excludedTeamMembers: ['valid-user'] },
+      log,
+      []
+    )
+
+    await plugin.sync({ id: 'TEAM_ID', enabled: true })
+
+    expect(github.graphql).not.toHaveBeenCalled()
+  })
 })
