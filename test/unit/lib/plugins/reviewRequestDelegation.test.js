@@ -5,8 +5,8 @@ describe('ReviewRequestDelegation', () => {
 
   beforeEach(() => {
     jest.resetModules()
-    jest.doMock('@operate-first/probot-metrics', () => ({
-      useCounter: () => ({ labels: () => ({ inc: jest.fn() }) })
+    jest.doMock('../../../../lib/metrics', () => ({
+      meteredPlugin: (_plugin, fn) => fn()
     }))
     ReviewRequestDelegation = require('../../../../lib/plugins/reviewRequestDelegation')
     log = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }

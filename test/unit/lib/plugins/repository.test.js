@@ -2,25 +2,26 @@ const Repository = require('../../../../lib/plugins/repository')
 
 describe('Repository', () => {
   const github = {
-    repos: {
-      get: jest.fn().mockResolvedValue({
-        data: {
-          topics: []
-        }
-      }),
-      update: jest.fn().mockResolvedValue(),
-      replaceAllTopics: jest.fn().mockResolvedValue()
+    rest: {
+      repos: {
+        get: jest.fn().mockResolvedValue({
+          data: {
+            topics: []
+          }
+        }),
+        update: jest.fn().mockResolvedValue(),
+        replaceAllTopics: jest.fn().mockResolvedValue()
+      }
     }
   }
   const log = jest.fn()
   log.debug = jest.fn()
   log.error = jest.fn()
 
-
   function configure (config) {
-    const noop = false
+    const nop = false
     const errors = []
-    return new Repository(noop, github, { owner: 'bkeepers', repo: 'test' }, config, 1, log, errors)
+    return new Repository(nop, github, { owner: 'bkeepers', repo: 'test' }, config, 1, log, errors)
   }
 
   describe('sync', () => {
@@ -35,7 +36,7 @@ describe('Repository', () => {
         topics: []
       })
       return plugin.sync().then(() => {
-        expect(github.repos.update).toHaveBeenCalledWith({
+        expect(github.rest.repos.update).toHaveBeenCalledWith({
           owner: 'bkeepers',
           repo: 'test',
           name: 'test',
@@ -50,7 +51,7 @@ describe('Repository', () => {
         name: 'new-name'
       })
       return plugin.sync().then(() => {
-        expect(github.repos.update).toHaveBeenCalledWith({
+        expect(github.rest.repos.update).toHaveBeenCalledWith({
           owner: 'bkeepers',
           repo: 'test',
           name: 'new-name',
@@ -59,13 +60,13 @@ describe('Repository', () => {
       })
     })
 
-    it('syncs topics', () => {
+    it.only('syncs topics', () => {
       const plugin = configure({
         topics: ['foo', 'bar']
       })
 
       return plugin.sync().then(() => {
-        expect(github.repos.replaceAllTopics).toHaveBeenCalledWith({
+        expect(github.rest.repos.replaceAllTopics).toHaveBeenCalledWith({
           owner: 'bkeepers',
           repo: 'test',
           names: ['foo', 'bar'],

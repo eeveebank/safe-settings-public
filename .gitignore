@@ -140,3 +140,4 @@ samconfig.toml
 # test file to be ignored
 reports
 test.log
+reports

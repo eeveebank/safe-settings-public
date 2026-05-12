@@ -1,6 +1,12 @@
 /* eslint-disable no-undef */
-
+class Octokit {}
 const Settings = require('../../../lib/settings')
+const yaml = require('js-yaml')
+// jest.mock('../../../lib/settings', () => {
+//   const OriginalSettings = jest.requireActual('../../../lib/settings')
+//   //const orginalSettingsInstance = new OriginalSettings(false, stubContext, mockRepo, config, mockRef, mockSubOrg)
+//   return OriginalSettings
+// })
 
 describe('Settings Tests', () => {
   let stubContext
@@ -8,19 +14,35 @@ describe('Settings Tests', () => {
   let stubConfig
   let mockRef
   let mockSubOrg
+  let subOrgConfig
 
-  function createSettings (config) {
-    return new Settings(false, stubContext, mockRepo, config, mockRef, mockSubOrg)
+  function createSettings(config) {
+    const settings = new Settings(false, stubContext, mockRepo, config, mockRef, mockSubOrg)
+    return settings;
   }
 
   beforeEach(() => {
+    const mockOctokit = {}
+      const content = Buffer.from('key: value').toString('base64');
+    mockOctokit.rest = {
+      repos: {
+        getContent: jest.fn().mockResolvedValue({ data: { content } })
+      }
+    }
+
+    mockOctokit.request = {
+      endpoint: jest.fn().mockReturnValue({})
+    }
+
+    mockOctokit.paginate = jest.fn().mockResolvedValue([])
+
     stubContext = {
       payload: {
         installation: {
           id: 123
         }
       },
-      octokit: jest.fn(),
+      octokit: mockOctokit,
       log: {
         debug: jest.fn((msg) => {
           console.log(msg)
@@ -34,9 +56,10 @@ describe('Settings Tests', () => {
       }
     }
 
-    mockRepo = jest.fn()
-    mockRef = jest.fn()
-    mockSubOrg = jest.fn()
+
+    mockRepo = { owner: 'test', repo: 'test-repo' }
+    mockRef = 'main'
+    mockSubOrg = 'frontend'
   })
 
   describe('restrictedRepos', () => {
@@ -66,7 +89,7 @@ describe('Settings Tests', () => {
       beforeEach(() => {
         stubConfig = {
           restrictedRepos: {
-            exclude: ['foo', '.*-test$', '^personal-.*$']
+            exclude: ['foo', '*-test', 'personal-*']
           }
         }
       })
@@ -93,7 +116,7 @@ describe('Settings Tests', () => {
       beforeEach(() => {
         stubConfig = {
           restrictedRepos: {
-            include: ['foo', '.*-test$', '^personal-.*$']
+            include: ['foo', '*-test', 'personal-*']
           }
         }
       })
@@ -140,4 +163,229 @@ describe('Settings Tests', () => {
       })
     })
   }) // restrictedRepos
+
+  describe('getRepoOverrideConfig', () => {
+    describe('repository defined in a file using the .yaml extension', () => {
+      beforeEach(() => {
+        stubConfig = {
+          repoConfigs: {
+            'repository.yaml': { repository: { name: 'repository', config: 'config1' } }
+          }
+        }
+      })
+
+      it('Picks up a repository defined in file using the .yaml extension', () => {
+        settings = createSettings(stubConfig)
+        settings.repoConfigs = stubConfig.repoConfigs
+        const repoConfig = settings.getRepoOverrideConfig('repository')
+
+        expect(typeof repoConfig).toBe('object')
+        expect(repoConfig).not.toBeNull()
+        expect(Object.keys(repoConfig).length).toBeGreaterThan(0)
+      })
+    })
+
+    describe('repository defined in a file using the .yml extension', () => {
+      beforeEach(() => {
+        stubConfig = {
+          repoConfigs: {
+            'repository.yml': { repository: { name: 'repository', config: 'config1' } }
+          }
+        }
+      })
+
+      it('Picks up a repository defined in file using the .yml extension', () => {
+        settings = createSettings(stubConfig)
+        settings.repoConfigs = stubConfig.repoConfigs
+        const repoConfig = settings.getRepoOverrideConfig('repository')
+
+        expect(typeof repoConfig).toBe('object')
+        expect(repoConfig).not.toBeNull()
+        expect(Object.keys(repoConfig).length).toBeGreaterThan(0)
+      })
+    })
+  }) // repoOverrideConfig
+  describe('loadConfigs', () => {
+    describe('load suborg configs', () => {
+      beforeEach(() => {
+        stubConfig = {
+          restrictedRepos: {
+          }
+        }
+        subOrgConfig = yaml.load(`
+          suborgrepos:
+          - new-repo
+
+          suborgproperties:
+          - EDP: true
+          - do_no_delete: true
+
+          teams:
+            - name: core
+              permission: bypass
+            - name: docss
+              permission: pull
+            - name: docs
+              permission: pull
+
+          validator:
+            pattern: '[a-zA-Z0-9_-]+_[a-zA-Z0-9_-]+.*'
+
+          repository:
+            # A comma-separated list of topics to set on the repository
+            topics:
+            - frontend
+
+          `)
+
+      })
+
+      it("Should load configMap for suborgs'", async () => {
+        //mockSubOrg = jest.fn().mockReturnValue(['suborg1', 'suborg2'])
+        mockSubOrg = undefined
+        settings = createSettings(stubConfig)
+        jest.spyOn(settings, 'loadConfigMap').mockImplementation(() => [{ name: "frontend", path: ".github/suborgs/frontend.yml" }])
+        jest.spyOn(settings, 'loadYaml').mockImplementation(() => subOrgConfig)
+        jest.spyOn(settings, 'getReposForTeam').mockImplementation(() => [{ name: 'repo-test' }])
+        jest.spyOn(settings, 'getSubOrgRepositories').mockImplementation(() => [{ repository_name: 'repo-for-property' }])
+
+        const subOrgConfigs = await settings.getSubOrgConfigs()
+        expect(settings.loadConfigMap).toHaveBeenCalledTimes(1)
+
+        // Get own properties of subOrgConfigs
+        const ownProperties = Object.getOwnPropertyNames(subOrgConfigs);
+        expect(ownProperties.length).toEqual(3)
+      })
+
+      it("Should throw an error when a repo is found in multiple suborgs configs'", async () => {
+        //mockSubOrg = jest.fn().mockReturnValue(['suborg1', 'suborg2'])
+        mockSubOrg = undefined
+        settings = createSettings(stubConfig)
+        jest.spyOn(settings, 'loadConfigMap').mockImplementation(() => [{ name: "frontend", path: ".github/suborgs/frontend.yml" }, { name: "backend", path: ".github/suborgs/backend.yml" }])
+        jest.spyOn(settings, 'loadYaml').mockImplementation(() => subOrgConfig)
+        jest.spyOn(settings, 'getReposForTeam').mockImplementation(() => [{ name: 'repo-test' }])
+        jest.spyOn(settings, 'getSubOrgRepositories').mockImplementation(() => [{ repository_name: 'repo-for-property' }])
+
+        expect(async () => await settings.getSubOrgConfigs()).rejects.toThrow('Multiple suborg configs for new-repo in .github/suborgs/backend.yml and .github/suborgs/frontend.yml')
+        // try {
+        //   await settings.getSubOrgConfigs()
+        // } catch (e) {
+        //   console.log(e)
+        // }
+      })
+    })
+  }) // loadConfigs
+
+  describe('loadYaml', () => {
+    let settings
+
+    const encodeYaml = (content) => Buffer.from(content).toString('base64')
+
+    beforeEach(() => {
+      Settings.fileCache = {}
+      stubContext = {
+        octokit: {
+          rest: {
+            repos: {
+              getContent: jest.fn()
+            }
+          },
+          request: jest.fn(),
+          paginate: jest.fn()
+        },
+        log: {
+          debug: jest.fn(),
+          info: jest.fn(),
+          error: jest.fn()
+        },
+        payload: {
+          installation: {
+            id: 123
+          }
+        }
+      }
+      settings = createSettings({})
+    })
+
+    it('returns cached YAML content on a 304 response', async () => {
+      const filePath = 'path/to/error.yml'
+      Settings.fileCache[`${mockRepo.owner}/${filePath}`] = {
+        etag: 'etag123',
+        data: { content: encodeYaml('key: value') }
+      }
+      settings.github.rest.repos.getContent.mockRejectedValue({ status: 304 })
+
+      const result = await settings.loadYaml(filePath)
+
+      expect(result).toEqual({ key: 'value' })
+      expect(settings.github.rest.repos.getContent).toHaveBeenCalledWith(expect.objectContaining({
+        owner: mockRepo.owner,
+        path: filePath,
+        ref: mockRef,
+        headers: { 'If-None-Match': 'etag123' }
+      }))
+    })
+
+    it('returns parsed YAML content and updates the cache on a cache miss', async () => {
+      const filePath = 'path/to/error.yml'
+      settings.github.rest.repos.getContent.mockResolvedValue({
+        data: { content: encodeYaml('key: value') },
+        headers: { etag: 'etag123' }
+      })
+
+      const result = await settings.loadYaml(filePath)
+
+      expect(result).toEqual({ key: 'value' })
+      expect(Settings.fileCache[`${mockRepo.owner}/${filePath}`]).toEqual({
+        etag: 'etag123',
+        data: { content: encodeYaml('key: value') }
+      })
+    })
+
+    it('returns null when the path resolves to a directory', async () => {
+      const filePath = 'path/to/directory'
+      settings.github.rest.repos.getContent.mockResolvedValue({ data: [] })
+
+      const result = await settings.loadYaml(filePath)
+
+      expect(result).toBeNull()
+    })
+
+    it('returns null for 404 responses', async () => {
+      const filePath = 'path/to/missing.yml'
+      settings.github.rest.repos.getContent.mockRejectedValue({ status: 404 })
+
+      const result = await settings.loadYaml(filePath)
+
+      expect(result).toBeNull()
+    })
+
+    it('throws non-404 exceptions when not in nop mode', async () => {
+      const filePath = 'path/to/error.yml'
+      settings.github.rest.repos.getContent.mockRejectedValue(new Error('Unexpected error'))
+
+      await expect(settings.loadYaml(filePath)).rejects.toThrow('Unexpected error')
+    })
+
+    it('logs and appends a NopCommand for non-404 exceptions in nop mode', async () => {
+      const filePath = 'path/to/error.yml'
+      settings.nop = true
+      jest.spyOn(settings, 'appendToResults')
+      settings.github.rest.repos.getContent.mockRejectedValue(new Error('Unexpected error'))
+
+      const result = await settings.loadYaml(filePath)
+
+      expect(result).toBeUndefined()
+      expect(settings.appendToResults).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'ERROR',
+            action: expect.objectContaining({
+              msg: expect.stringContaining('Unexpected error')
+            })
+          })
+        ])
+      )
+    })
+  })
 }) // Settings Tests

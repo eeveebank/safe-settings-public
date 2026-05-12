@@ -1,10 +1,13 @@
-const { Probot, ProbotOctokit } = require('probot')
-const plugin = require('../../index')
+jest.mock('probot', () => ({ Probot: class Probot {} }))
 
 describe.skip('plugin', () => {
+  let Probot
+  let plugin
   let app, event, sync, github
 
   beforeEach(() => {
+    ({ Probot } = require('probot'))
+    plugin = require('../../index')
     class Octokit {
       static defaults () {
         return Octokit
@@ -24,7 +27,7 @@ describe.skip('plugin', () => {
       }
     }
 
-    app = new Probot({ secret: "abcdef", Octokit })
+    app = new Probot({ secret: 'abcdef', Octokit })
     github = {
       repos: {
         getContents: jest.fn(() => Promise.resolve({ data: { content: '' } }))
@@ -151,5 +154,4 @@ describe.skip('plugin', () => {
       expect(sync).toHaveBeenCalled()
     })
   })
-
 })
