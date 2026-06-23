@@ -25,7 +25,7 @@ jobs:
   deploy-to-k8s:
     if: ${{ github.event.inputs.status == 'passed' }}
     name: Deploy to Kubernetes
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.GLOBAL_RUNNER_OVERWRITE || vars.TEAM_RUNNER_LABEL || 'boxed-runner' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
