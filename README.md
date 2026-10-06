@@ -11,6 +11,40 @@
 - Disabled validator due to app crash if a validator throws
 - Disabled milestones due to unit test indicating it's broken
 - Added `reviewRequestDelegation` for teams
+- Disable GitHub review request delegation when the effective `reviewRequestDelegation.pring` flag is `true`
+
+### Pring review assignment
+
+Set `reviewRequestDelegation.pring: true` in the admin repository's
+`.github/settings.yml` as the organization default, or in
+`.github/teams/<team-slug>.yml` for one team:
+
+```yaml
+reviewRequestDelegation:
+  pring: true
+  enabled: true
+```
+
+Safe-settings still merges the organization's `reviewRequestDelegation` defaults
+with the team's overrides, but forces `enabled: false` when applying that policy
+to GitHub. The admin configuration is unchanged, so Pring can use the intended
+assignment policy, including `reviewRequestDelegation.enabled`.
+
+The team's explicit `reviewRequestDelegation.pring` value overrides the organization
+default, including `pring: false` to opt out. A missing team flag inherits the
+organization default, even when the team has no file. When neither layer sets the
+flag, GitHub delegation is managed as usual.
+
+An effective `pring: false` applies the configured GitHub policy as usual.
+Switching Pring off restores that policy on the next team sync. Dry-runs show the
+effective GitHub setting, and the temporary disable/restore endpoint cannot
+re-enable GitHub delegation while the effective `pring` flag is `true`.
+Restricted teams remain excluded from sync.
+
+Only enable this handover once Pring actively requests reviewers; shadow
+evaluation alone does not replace GitHub assignment.
+Pring must read the same nested flag and support organization-level inheritance
+before this configuration is used; this change only updates safe-settings.
 
 [![Create a release](https://github.com/github/safe-settings/actions/workflows/create-release.yml/badge.svg)](https://github.com/github/safe-settings/actions/workflows/create-release.yml)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
