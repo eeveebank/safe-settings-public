@@ -208,6 +208,30 @@ describe('Pring team review request delegation', () => {
     expect(github.graphql.mock.calls.map(([, { input }]) => input.enabled)).toEqual([false, false, false])
   })
 
+  it.each([false, true])('preserves the merged Pring policy with an enabled=%s override', async (enabled) => {
+    teamConfigs['team-slug.yml'] = {
+      reviewRequestDelegation: { pring: true, teamMemberCount: 2, notifyTeam: false }
+    }
+    const override = { enabled, removeTeamRequest: true }
+    const originalConfig = structuredClone(settings.config)
+    const originalTeamConfigs = structuredClone(teamConfigs)
+
+    await settings.updateOrgTeams('acme', 'team-slug', override)
+
+    expect(github.graphql.mock.calls[0][1].input).toEqual({
+      id: 'TEAM_ID',
+      enabled: false,
+      algorithm: 'ROUND_ROBIN',
+      teamMemberCount: 2,
+      notifyTeam: false,
+      removeTeamRequest: true,
+      excludedTeamMemberIds: []
+    })
+    expect(settings.config).toEqual(originalConfig)
+    expect(teamConfigs).toEqual(originalTeamConfigs)
+    expect(override).toEqual({ enabled, removeTeamRequest: true })
+  })
+
   it('restores the configured GitHub policy when Pring is switched off', async () => {
     teamConfigs['team-slug.yml'] = { reviewRequestDelegation: { pring: true } }
     await settings.updateOrgTeams('acme')

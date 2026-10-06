@@ -16,7 +16,7 @@
 ### Pring review assignment
 
 Set `reviewRequestDelegation.pring: true` in the admin repository's
-`.github/settings.yml` as the organisation default, or in
+`.github/settings.yml` as the organization default, or in
 `.github/teams/<team-slug>.yml` for one team:
 
 ```yaml
@@ -25,14 +25,14 @@ reviewRequestDelegation:
   enabled: true
 ```
 
-Safe-settings still merges the organisation's `reviewRequestDelegation` defaults
+Safe-settings still merges the organization's `reviewRequestDelegation` defaults
 with the team's overrides, but forces `enabled: false` when applying that policy
 to GitHub. The admin configuration is unchanged, so Pring can use the intended
 assignment policy, including `reviewRequestDelegation.enabled`.
 
-The team's explicit `reviewRequestDelegation.pring` value overrides the organisation
+The team's explicit `reviewRequestDelegation.pring` value overrides the organization
 default, including `pring: false` to opt out. A missing team flag inherits the
-organisation default, even when the team has no file. When neither layer sets the
+organization default, even when the team has no file. When neither layer sets the
 flag, GitHub delegation is managed as usual.
 
 An effective `pring: false` applies the configured GitHub policy as usual.
@@ -43,7 +43,7 @@ Restricted teams remain excluded from sync.
 
 Only enable this handover once Pring actively requests reviewers; shadow
 evaluation alone does not replace GitHub assignment.
-Pring must read the same nested flag and support organisation-level inheritance
+Pring must read the same nested flag and support organization-level inheritance
 before this configuration is used; this change only updates safe-settings.
 
 [![Create a release](https://github.com/github/safe-settings/actions/workflows/create-release.yml/badge.svg)](https://github.com/github/safe-settings/actions/workflows/create-release.yml)
