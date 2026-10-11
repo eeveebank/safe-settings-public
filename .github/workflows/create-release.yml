@@ -16,7 +16,7 @@ permissions:
 jobs:
   build:
     if: ${{ github.actor != 'dependabot'}}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.GLOBAL_RUNNER_OVERWRITE || vars.TEAM_RUNNER_LABEL || 'boxed-runner' }}
     outputs:
       release: ${{ steps.finalrelease.outputs.release }}
     steps:
@@ -71,7 +71,7 @@ jobs:
           sbom: false
 
   helm:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.GLOBAL_RUNNER_OVERWRITE || vars.TEAM_RUNNER_LABEL || 'boxed-runner' }}
     needs: build
     steps:
       - name: Clone repo
