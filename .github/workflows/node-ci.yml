@@ -12,7 +12,7 @@ concurrency:
 jobs:
   test:
     if: ${{ github.actor != 'dependabot[bot]'}}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.GLOBAL_RUNNER_OVERWRITE || vars.TEAM_RUNNER_LABEL || 'boxed-runner' }}
     steps:
       - uses: actions/checkout@v6
       - name: Setup node

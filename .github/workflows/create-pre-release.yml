@@ -38,7 +38,7 @@ permissions:
 jobs:
   build:
     if: ${{ github.actor != 'dependabot'}}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.GLOBAL_RUNNER_OVERWRITE || vars.TEAM_RUNNER_LABEL || 'boxed-runner' }}
     outputs:
       release: ${{ steps.prerelease.outputs.release }}
     steps:
