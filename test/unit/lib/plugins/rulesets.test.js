@@ -419,4 +419,65 @@ describe('Rulesets', () => {
       })
     })
   })
+
+  describe('[org] unmanagedRulesets', () => {
+    function configureUnmanaged (config, unmanaged) {
+      return new Rulesets(false, github, { owner: 'jitran', repo: 'test' }, config, log, [], 'org', unmanaged)
+    }
+
+    it('does not delete an unmanaged org ruleset missing from settings', () => {
+      const legacy = generateRequestRuleset(1, 'legacy', org_conditions, [{ context: 'Check' }], true)
+      const prVal = generateRequestRuleset(2, 'pr-val', org_conditions, [{ context: 'pr-val' }], true)
+      github.paginate = jest.fn()
+        .mockResolvedValueOnce([legacy, prVal])
+        .mockResolvedValueOnce([legacy])
+
+      const plugin = configureUnmanaged([], ['pr-val'])
+
+      return plugin.sync().then(() => {
+        const calls = github.request.mock.calls
+        expect(calls).toHaveLength(1)
+        expect(calls[0][0]).toBe('DELETE /orgs/{org}/rulesets/{id}')
+        expect(calls[0][1]).toEqual(expect.objectContaining({ id: 1 }))
+      })
+    })
+
+    it('does not fetch the details of an unmanaged org ruleset', () => {
+      const prVal = generateRequestRuleset(2, 'pr-val', org_conditions, [{ context: 'pr-val' }], true)
+      github.paginate = jest.fn().mockResolvedValueOnce([prVal])
+
+      const plugin = configureUnmanaged([], ['pr-val'])
+
+      return plugin.sync().then(() => {
+        expect(github.paginate).toHaveBeenCalledTimes(1)
+        expect(github.request).not.toHaveBeenCalled()
+      })
+    })
+
+    it('ignores an unmanaged ruleset declared in settings', () => {
+      github.paginate = jest.fn().mockResolvedValue([])
+
+      const plugin = configureUnmanaged(
+        [generateRequestRuleset(2, 'pr-val', org_conditions, [{ context: 'other' }], true)],
+        ['pr-val']
+      )
+
+      return plugin.sync().then(() => {
+        expect(github.request).not.toHaveBeenCalled()
+      })
+    })
+
+    it('manages every ruleset when unmanagedRulesets is not set', () => {
+      const prVal = generateRequestRuleset(2, 'pr-val', org_conditions, [{ context: 'pr-val' }], true)
+      github.paginate = jest.fn()
+        .mockResolvedValueOnce([prVal])
+        .mockResolvedValueOnce([prVal])
+
+      const plugin = configureUnmanaged([], undefined)
+
+      return plugin.sync().then(() => {
+        expect(github.request).toHaveBeenCalledWith('DELETE /orgs/{org}/rulesets/{id}', expect.objectContaining({ id: 2 }))
+      })
+    })
+  })
 })

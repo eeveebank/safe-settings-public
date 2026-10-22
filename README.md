@@ -261,6 +261,17 @@ When using `include` and `exclude`:
 
 By default, if no configuration file is provided, `safe-settings` will excludes these repos: `admin`, `.github` and `safe-settings`.
 
+### Leaving org rulesets to other tools (`unmanagedRulesets`)
+
+By default, `safe-settings` deletes any organization ruleset that isn't declared in `settings.yml`. To let another tool own a ruleset, list its exact name in `unmanagedRulesets` in `deployment-settings.yml`:
+
+```yml
+unmanagedRulesets:
+  - pr-val
+```
+
+`safe-settings` never updates or deletes a ruleset listed here. If `settings.yml` also declares a ruleset with that name, the declaration is ignored and a warning is logged. All other rulesets are managed as usual.
+
 See our [deployment-settings.yml sample](docs/sample-settings/sample-deployment-settings.yml).
 
 ### Custom rules
