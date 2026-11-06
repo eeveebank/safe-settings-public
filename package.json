@@ -35,19 +35,23 @@
     "@probot/adapter-aws-lambda-serverless": "^4.0.3",
     "deepmerge": "^4.3.1",
     "eta": "^3.5.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.3.2",
     "lodash": "^4.18.1",
     "minimatch": "^10.2.1",
     "node-cron": "^4.2.1",
     "octokit": "^5.0.2",
     "probot": "^14.2.4",
     "proxy-from-env": "^2.1.0",
-    "undici": "^7.29.1"
+    "undici": "^7.30.1"
   },
   "overrides": {
     "@probot/pino@3.0.0": {
       "@sentry/node": "^10.76.2"
-    }
+    },
+    "express@4.22.1": {
+      "qs": "^6.16.2"
+    },
+    "js-yaml@3": "^3.15.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.1.0",
